@@ -5,41 +5,104 @@
     <meta name="copyright" content="Copyright © 2026 Zyad Al-Mowafy (MRZZ)">
     <meta name="author" content="Zyad Al-Mowafy (MRZZ)">
     <meta name="creator" content="Zyad Al-Mowafy (MRZZ)">
-    <title>MRZZ Chess</title>
+    <title>MRZZ Chess Pro</title>
     <style>
         * { box-sizing: border-box; }
-        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
+        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; transition: background 0.4s, filter 0.3s; }
         
+        /* Background Themes Classes */
+        body.bg-dark { background: #1a1a1a; }
+        body.bg-forest { background: linear-gradient(135deg, #142214, #1f3a1f); }
+        body.bg-space { background: linear-gradient(135deg, #0b0f19, #161d30); }
+        body.bg-retro { background: linear-gradient(135deg, #2b1f1d, #42312e); }
+        body.bg-cyber { background: radial-gradient(circle, #0d1117 0%, #05070a 100%); }
+
         /* Welcome & Instructions Screen */
-        .welcome-screen { max-width: 600px; width: 100%; background: #262626; border: 3px solid #b58863; border-radius: 10px; padding: 25px; text-align: left; box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
+        .welcome-screen { max-width: 750px; width: 100%; background: #262626; border: 3px solid #b58863; border-radius: 10px; padding: 25px; text-align: left; box-shadow: 0 8px 16px rgba(0,0,0,0.5); position: relative; }
         .welcome-screen h1 { color: #f0d9b5; font-size: 32px; margin-top: 0; text-align: center; }
-        .instructions { margin: 20px 0; line-height: 1.6; color: #ddd; }
+        .instructions { margin: 20px 0; line-height: 1.6; color: #ddd; max-height: 250px; overflow-y: auto; padding-right: 5px; }
         .instructions h3 { color: #f0d9b5; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 5px; }
         .instructions ul { padding-left: 20px; margin: 5px 0; }
         .instructions li { margin-bottom: 8px; }
-        .play-btn { background: #b58863; color: #fff; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: background 0.2s, transform 0.1s; width: 100%; margin-top: 10px; }
+        
+        .menu-grid-btns { display: flex; gap: 15px; margin-top: 15px; }
+        .play-btn { background: #b58863; color: #fff; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: background 0.2s, transform 0.1s; flex: 2; }
+        .theme-trigger-btn { background: #444; color: #fff; border: 2px solid #666; padding: 15px 20px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; flex: 1; transition: background 0.2s; }
         .play-btn:hover { background: #8c6239; }
-        .play-btn:active { transform: scale(0.98); }
+        .theme-trigger-btn:hover { background: #555; }
 
-        /* Main Game Container (Hidden initially) */
+        /* Matrix Themes Overlay Panel */
+        .matrix-theme-panel { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e1e; border-radius: 10px; padding: 20px; z-index: 10; overflow-y: auto; }
+        .matrix-theme-panel h2 { color: #f0d9b5; text-align: center; margin-top: 0; margin-bottom: 20px; }
+        
+        .matrix-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .matrix-col { background: #2d2d2d; padding: 10px; border-radius: 6px; border: 1px solid #444; }
+        .matrix-col h4 { text-align: center; color: #f0d9b5; margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        
+        .matrix-cell { background: #3c3c3c; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 2px solid transparent; text-align: center; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px; transition: background 0.2s; }
+        .matrix-cell:hover { background: #4a4a4a; }
+        .matrix-cell.active-selected { border-color: #22c55e !important; background: #233524 !important; }
+        
+        /* Miniature 4-Square Board Preview */
+        .board-preview-4sq { display: grid; grid-template-columns: repeat(2, 12px); grid-template-rows: repeat(2, 12px); gap: 0; margin-top: 4px; border: 1px solid #222; }
+        .preview-box { width: 12px; height: 12px; }
+
+        .confirm-theme-btn { background: #22c55e; color: #fff; border: none; padding: 12px 20px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 15px; }
+        .confirm-theme-btn:hover { background: #16a34a; }
+
+        /* Main Game Container */
         .game-container { display: none; flex-direction: column; align-items: center; justify-content: center; }
-
-        /* Game Board Styles */
         h1 { color: #f0d9b5; margin: 5px; font-size: 28px; }
-        .controls { margin-bottom: 10px; display: flex; gap: 15px; }
-        button.game-btn { padding: 10px 20px; font-weight: bold; background: #b58863; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        
+        /* Controls & Timeline Navigators */
+        .controls { margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+        .btn-row { display: flex; gap: 10px; }
+        button.game-btn { padding: 8px 16px; font-weight: bold; background: #b58863; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        button.game-btn:hover { background: #8c6239; }
+        .timeline-btn { background: #475569 !important; }
+        .timeline-btn:hover { background: #334155 !important; }
         #flipSwordBtn { background: #b83b3b; display: none; }
-        .board { display: grid; grid-template-columns: repeat(8, 55px); grid-template-rows: repeat(12, 55px); border: 4px solid #333; background: #b58863; }
+        
+        /* Board Core */
+        .board { display: grid; grid-template-columns: repeat(8, 55px); grid-template-rows: repeat(12, 55px); border: 4px solid #333; }
         .square { width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; user-select: none; }
-        .light { background: #f0d9b5; } .dark { background: #b58863; }
-        .piece { cursor: grab; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; z-index: 2; }
+        
+        /* Board Styles Classes */
+        .board.b-wood .light { background: #f0d9b5; }   .board.b-wood .dark { background: #b58863; }
+        .board.b-green .light { background: #eeeed2; }  .board.b-green .dark { background: #769656; }
+        .board.b-bw .light { background: #ffffff; }     .board.b-bw .dark { background: #333333; }
+        .board.b-glass .light { background: #e0f2fe; }   .board.b-glass .dark { background: #38bdf8; }
+        .board.b-default .light { background: #eaeaea; } .board.b-default .dark { background: #a1a1a1; }
+
+        /* Pieces & Aesthetics */
+        .piece { cursor: grab; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 2; position: relative; }
         .piece:active { cursor: grabbing; }
-        .p-white { color: #fff !important; filter: drop-shadow(0 0 2px #000) drop-shadow(0 2px 3px rgba(0,0,0,0.8)); }
-        .p-black { color: #111 !important; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 1px 1px #fff); }
-        .special-bBish { color: #00ffff !important; }
-        .special-gKni  { color: #ffd700 !important; }
-        .special-amaz  { color: #ff00ff !important; }
-        .special-bAmaz { color: #ffaa00 !important; }
+        
+        /* Piece Color Styles */
+        body.p-style-classic .p-white { color: #fff !important; filter: drop-shadow(0 0 2px #000) drop-shadow(0 2px 3px rgba(0,0,0,0.8)); }
+        body.p-style-classic .p-black { color: #111 !important; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 1px 1px #fff); }
+        
+        body.p-style-neon .p-white { color: #00ffcc !important; filter: drop-shadow(0 0 5px #00ffcc); }
+        body.p-style-neon .p-black { color: #ff0055 !important; filter: drop-shadow(0 0 5px #ff0055); }
+
+        body.p-style-gold .p-white { color: #ffeaa7 !important; filter: drop-shadow(0 2px 2px #d6a2e8); }
+        body.p-style-gold .p-black { color: #2d3436 !important; filter: drop-shadow(0 0 3px #ffeaa7); }
+
+        body.p-style-vintage .p-white { color: #f5f6fa !important; filter: drop-shadow(0 2px 1px #7f8fa6); }
+        body.p-style-vintage .p-black { color: #353b48 !important; filter: drop-shadow(0 2px 1px #f5f6fa); }
+
+        /* Special Distinctions Badges */
+        .special-badge-star::after {
+            content: '✦'; font-size: 10px; position: absolute; bottom: 2px; right: 2px;
+            background: #ffd700; color: #000; border-radius: 50%; width: 13px; height: 13px;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.6); border: 1px solid #fff;
+        }
+
+        /* Custom Amazon Element Layout */
+        .amazon-container { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 100%; height: 100%; }
+        .amazon-crown { font-size: 13px; line-height: 1; margin-bottom: -11px; z-index: 3; position: absolute; top: 3px; color: #ffd700; filter: drop-shadow(0 1px 1px #000); }
+
         .w-sword { color: #ff3333 !important; filter: drop-shadow(0 0 5px #ff3333); }
         .b-sword { color: #3388ff !important; filter: drop-shadow(0 0 5px #3388ff); }
         .selected { background: #7b9c60 !important; }
@@ -52,32 +115,99 @@
         .ad-container { margin-top: 15px; width: 320px; height: 50px; background: #333; border: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-size: 12px; border-radius: 5px; }
     </style>
 </head>
-<body>
+<body class="bg-dark p-style-classic">
 
     <div class="welcome-screen" id="welcomeScreen">
-        <h1>MRZZ Chess</h1>
-        <div class="instructions">
+        <h1>MRZZ Chess Pro</h1>
+        <div class="instructions" id="instructionBox">
             <h3>📜 Game Manual & Special Rules:</h3>
-            <p>Welcome to <strong>MRZZ Chess</strong>, a battlefield expanded to a massive <strong>12×8 grid</strong>. Master the classic pieces along with your newly engineered mythical arsenal:</p>
+            <p>Welcome to <strong>MRZZ Chess Pro</strong>, a battlefield expanded to a massive <strong>12×8 grid</strong>. Master the classic pieces along with your newly engineered mythical arsenal:</p>
             <ul>
-                <li><strong>The Sword (⚔️/🗡️):</strong> A deadly direction-locked projectile unit. It attacks continuously along its designated angles. You can alternate its attacking orientation at the cost of your turn using the <strong>"Flip Sword 🔄"</strong> button.</li>
-                <li><strong>Bounced Bishop (🎔/🪖 Special):</strong> An advanced tactical unit that moves diagonally but holds the unique ability to **bounce off the left and right walls** of the battlefield to surprise enemies.</li>
-                <li><strong>Golden Knight (♘/♞ Special):</strong> A massive cavalry piece that combines the standard L-shaped leap of a Knight with the 1-step multi-directional movement of a King.</li>
-                <li><strong>Amazon & Bounced Amazon (♕/♛ Special):</strong> Ultimate powerhouse units. The regular Amazon combines Queen and Knight movements. The Bounced Amazon combines Knight leaps with the wall-bouncing diagonal physics of the Bounced Bishop.</li>
-                <li><strong>Pawn & Board Zones:</strong> Pawns have unique dynamic mechanics depending on their row height. Reaching the farthest rows (Row 12 for White, Row 1 for Black) triggers the <strong>Ultimate Promotion</strong> prompt.</li>
-                <li><strong>How to Move:</strong> Simply <strong>Drag & Drop</strong> any piece, or click the piece first to highlight all legal/capture moves, then click the destination square.</li>
+                <li><strong>The Sword (⚔️/🗡️):</strong> A deadly direction-locked projectile unit. Alternates angles via the <strong>"Flip Sword 🔄"</strong> button.</li>
+                <li><strong>Bounced Bishop (✦ Badge):</strong> Advanced tactical unit moving diagonally with unique **left and right wall bouncing** abilities. Identified by a gold badge.</li>
+                <li><strong>Giant Knight (✦ Badge):</strong> Cavalry piece combining Knight leaps with 1-step multi-directional King movements.</li>
+                <li><strong>Amazon Variants (👑 Wearing Crown):</strong> Powerhouses. Regular Amazon blends Queen/Knight. Bounced Amazon adds custom diagonal wall-bouncing physics.</li>
+                <li><strong>Dynamic Timeline Control:</strong> Navigate history fluidly with comprehensive rewind tools under the main operational theatre.</li>
             </ul>
         </div>
-        <button class="play-btn" onclick="startGame()">Play Game ⚔️</button>
+
+        <div class="matrix-theme-panel" id="matrixPanel">
+            <h2>Customization Matrix Dashboard</h2>
+            <div class="matrix-grid">
+                <div class="matrix-col" id="col-pieces">
+                    <h4>1. Pieces style</h4>
+                    <div class="matrix-cell active-selected" onclick="selectMatrix('pieces', 'classic', this)">Default Original</div>
+                    <div class="matrix-cell" onclick="selectMatrix('pieces', 'neon', this)">Neon Stealth</div>
+                    <div class="matrix-cell" onclick="selectMatrix('pieces', 'gold', this)">Imperial Gold</div>
+                    <div class="matrix-cell" onclick="selectMatrix('pieces', 'vintage', this)">Vintage Kraft</div>
+                    <div class="matrix-cell" onclick="selectMatrix('pieces', 'classic', this)">Legacy Backup</div>
+                </div>
+                <div class="matrix-col" id="col-boards">
+                    <h4>2. Field Grid</h4>
+                    <div class="matrix-cell active-selected" onclick="selectMatrix('board', 'wood', this)">
+                        Walnut Wood
+                        <div class="board-preview-4sq"><div class="preview-box" style="background:#f0d9b5"></div><div class="preview-box" style="background:#b58863"></div><div class="preview-box" style="background:#b58863"></div><div class="preview-box" style="background:#f0d9b5"></div></div>
+                    </div>
+                    <div class="matrix-cell" onclick="selectMatrix('board', 'green', this)">
+                        Emerald Grass
+                        <div class="board-preview-4sq"><div class="preview-box" style="background:#eeeed2"></div><div class="preview-box" style="background:#769656"></div><div class="preview-box" style="background:#769656"></div><div class="preview-box" style="background:#eeeed2"></div></div>
+                    </div>
+                    <div class="matrix-cell" onclick="selectMatrix('board', 'bw', this)">
+                        Absolute Noir
+                        <div class="board-preview-4sq"><div class="preview-box" style="background:#fff"></div><div class="preview-box" style="background:#333"></div><div class="preview-box" style="background:#333"></div><div class="preview-box" style="background:#fff"></div></div>
+                    </div>
+                    <div class="matrix-cell" onclick="selectMatrix('board', 'glass', this)">
+                        Cyber Glass
+                        <div class="board-preview-4sq"><div class="preview-box" style="background:#e0f2fe"></div><div class="preview-box" style="background:#38bdf8"></div><div class="preview-box" style="background:#38bdf8"></div><div class="preview-box" style="background:#e0f2fe"></div></div>
+                    </div>
+                    <div class="matrix-cell" onclick="selectMatrix('board', 'default', this)">
+                        Standard App
+                        <div class="board-preview-4sq"><div class="preview-box" style="background:#eaeaea"></div><div class="preview-box" style="background:#a1a1a1"></div><div class="preview-box" style="background:#a1a1a1"></div><div class="preview-box" style="background:#eaeaea"></div></div>
+                    </div>
+                </div>
+                <div class="matrix-col" id="col-audio">
+                    <h4>3. Movement Audio</h4>
+                    <div class="matrix-cell active-selected" onclick="selectMatrix('audio', '0', this)">Standard Click</div>
+                    <div class="matrix-cell" onclick="selectMatrix('audio', '1', this)">Deep Thud</div>
+                    <div class="matrix-cell" onclick="selectMatrix('audio', '2', this)">Retro Synth</div>
+                    <div class="matrix-cell" onclick="selectMatrix('audio', '3', this)">Cyber Echo</div>
+                    <div class="matrix-cell" onclick="selectMatrix('audio', '4', this)">Laser Zap</div>
+                </div>
+                <div class="matrix-col" id="col-bg">
+                    <h4>4. Environment</h4>
+                    <div class="matrix-cell active-selected" onclick="selectMatrix('bg', 'dark', this)">Default Slate</div>
+                    <div class="matrix-cell" onclick="selectMatrix('bg', 'forest', this)">Forest Shadows</div>
+                    <div class="matrix-cell" onclick="selectMatrix('bg', 'space', this)">Cosmic Abyss</div>
+                    <div class="matrix-cell" onclick="selectMatrix('bg', 'retro', this)">Vintage Warmth</div>
+                    <div class="matrix-cell" onclick="selectMatrix('bg', 'cyber', this)">Matrix Radial</div>
+                </div>
+            </div>
+            <button class="confirm-theme-btn" onclick="commitConfigurations()">Confirm & Lock Choices</button>
+        </div>
+
+        <div class="menu-grid-btns">
+            <button class="play-btn" onclick="startGame()">Play Game ⚔️</button>
+            <button class="theme-trigger-btn" onclick="openThemePanel()">Themes 🎨</button>
+        </div>
     </div>
 
     <div class="game-container" id="gameContainer">
-        <h1>MRZZ Chess</h1>
+        <h1>MRZZ Chess Pro</h1>
         <div class="controls">
-            <button class="game-btn" onclick="resetGame()">Reset Board</button>
-            <button id="flipSwordBtn" onclick="executeSwordFlip()">Flip Sword 🔄</button>
+            <div class="btn-row">
+                <button class="game-btn" onclick="resetGame()">Reset Board</button>
+                <button id="flipSwordBtn" onclick="executeSwordFlip()">Flip Sword 🔄</button>
+                <button class="game-btn timeline-btn" style="background:#ef4444 !important;" onclick="exitToMainMenu()">Return to HQ 🏰</button>
+            </div>
+            <div class="btn-row" style="margin-top: 5px;">
+                <button class="game-btn timeline-btn" onclick="jumpToTimeline(0)" title="Jump to start (Move 0)">⏮ 0</button>
+                <button class="game-btn timeline-btn" onclick="stepTimeline(-1)" title="Step Back">◀ Back</button>
+                <button class="game-btn timeline-btn" onclick="executeUndo()" style="background:#e11d48 !important;" title="Undo Last Turn">Undo ↩</button>
+                <button class="game-btn timeline-btn" onclick="stepTimeline(1)" title="Step Forward">Forward ▶</button>
+                <button class="game-btn timeline-btn" onclick="jumpToTimeline(gameHistory.length - 1)" title="Jump to Latest">Latest ⏭</button>
+            </div>
         </div>
-        <div class="board" id="board"></div>
+        <div class="board b-wood" id="board"></div>
         <div class="status" id="status">White's turn ⚪</div>
 
         <div class="ad-container" id="adSpace" style="padding: 0; overflow: hidden; border: 1px solid #444;">
@@ -94,19 +224,147 @@
     </footer>
 
 <script>
+    // Theme configurations tracker
+    let selectedPieces = 'classic';
+    let selectedBoard = 'wood';
+    let selectedAudio = '0';
+    let selectedBg = 'dark';
+
+    function openThemePanel() { document.getElementById('matrixPanel').style.display = 'block'; }
+    
+    function selectMatrix(category, value, element) {
+        const siblings = element.parentElement.querySelectorAll('.matrix-cell');
+        siblings.forEach(node => node.classList.remove('active-selected'));
+        element.classList.add('active-selected');
+        
+        if (category === 'pieces') selectedPieces = value;
+        if (category === 'board') selectedBoard = value;
+        if (category === 'audio') selectedAudio = value;
+        if (category === 'bg') selectedBg = value;
+    }
+
+    function commitConfigurations() {
+        document.body.className = `bg-${selectedBg} p-style-${selectedPieces}`;
+        const boardNode = document.getElementById('board');
+        if (boardNode) boardNode.className = `board b-${selectedBoard}`;
+        document.getElementById('matrixPanel').style.display = 'none';
+        triggerAudioFeedback();
+    }
+
+    // Audio Engine Synthesizer (Generates 5 distinct frequencies dynamically without files)
+    function triggerAudioFeedback() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            let id = parseInt(selectedAudio);
+            if (id === 0) { // Click
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+                osc.start(); osc.stop(ctx.currentTime + 0.05);
+            } else if (id === 1) { // Deep Thud
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(120, ctx.currentTime);
+                gain.gain.setValueAtTime(0.3, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.start(); osc.stop(ctx.currentTime + 0.15);
+            } else if (id === 2) { // Retro Synth
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.start(); osc.stop(ctx.currentTime + 0.2);
+            } else if (id === 3) { // Cyber Echo
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1200, ctx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                osc.start(); osc.stop(ctx.currentTime + 0.25);
+            } else if (id === 4) { // Laser Zap
+                osc.type = 'square'; osc.frequency.setValueAtTime(900, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.start(); osc.stop(ctx.currentTime + 0.2);
+            }
+        } catch(e) { console.log("Audio not supported yet"); }
+    }
+
     function startGame() {
         document.getElementById('welcomeScreen').style.display = 'none';
         document.getElementById('gameContainer').style.display = 'flex';
+        commitConfigurations();
         resetGame();
+    }
+
+    function exitToMainMenu() {
+        document.getElementById('gameContainer').style.display = 'none';
+        document.getElementById('welcomeScreen').style.display = 'block';
     }
 
     const BOARD_ROWS = 12, BOARD_COLS = 8;
     let boardState = [], selectedSquare = null, legalMoves = [], currentTurn = 'white', isGameOver = false;
     
-    const symbols = {
-        white: { pawn: '♙', rook: '♖', knight: '♘', bishop: '♗', bBishop: '♗', queen: '♕', king: '♔', sword: '⚔️', gKnight: '♘', amazon: '♕', bAmazon: '♕' },
-        black: { pawn: '♟', rook: '♜', knight: '♞', bishop: '♝', bBishop: '♝', queen: '♛', king: '♚', sword: '🗡️', gKnight: '♞', amazon: '♛', bAmazon: '♛' }
+    // Timeline States Array System
+    let gameHistory = []; 
+    let currentTimelineIndex = -1;
+
+    const baseSymbols = {
+        white: { pawn: '♙', rook: '♖', knight: '♘', bishop: '♗', bBishop: '♗', queen: '♕', king: '♔', sword: '⚔️', gKnight: '♘', amazon: '♘', bAmazon: '♘' },
+        black: { pawn: '♟', rook: '♜', knight: '♞', bishop: '♝', bBishop: '♝', queen: '♛', king: '♚', sword: '🗡️', gKnight: '♞', amazon: '♞', bAmazon: '♞' }
     };
+
+    function cloneBoardState(source) {
+        return source.map(row => row.map(cell => cell ? { ...cell } : null));
+    }
+
+    function saveTimelineRecord() {
+        // Drop any forward records if we were browsing history and made a new move
+        if (currentTimelineIndex < gameHistory.length - 1) {
+            gameHistory = gameHistory.slice(0, currentTimelineIndex + 1);
+        }
+        gameHistory.push({
+            board: cloneBoardState(boardState),
+            turn: currentTurn,
+            gameOver: isGameOver
+        });
+        currentTimelineIndex = gameHistory.length - 1;
+    }
+
+    function executeUndo() {
+        if (gameHistory.length <= 1 || currentTimelineIndex <= 0) return;
+        gameHistory.pop(); // Delete current state record
+        currentTimelineIndex = gameHistory.length - 1;
+        
+        const previousState = gameHistory[currentTimelineIndex];
+        boardState = cloneBoardState(previousState.board);
+        currentTurn = previousState.turn;
+        isGameOver = previousState.gameOver;
+        
+        selectedSquare = null; legalMoves = [];
+        triggerAudioFeedback();
+        renderBoard();
+        checkGameStatus();
+    }
+
+    function jumpToTimeline(index) {
+        if (index < 0 || index >= gameHistory.length) return;
+        currentTimelineIndex = index;
+        const state = gameHistory[currentTimelineIndex];
+        boardState = cloneBoardState(state.board);
+        currentTurn = state.turn;
+        isGameOver = state.gameOver;
+        selectedSquare = null; legalMoves = [];
+        triggerAudioFeedback();
+        renderBoard();
+        checkGameStatus();
+    }
+
+    function stepTimeline(direction) {
+        let target = currentTimelineIndex + direction;
+        jumpToTimeline(target);
+    }
 
     function initBoardData() {
         boardState = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
@@ -127,7 +385,11 @@
         boardState[10][1] = {type: 'knight', color: 'white'}; boardState[10][6] = {type: 'knight', color: 'white'};
         boardState[10][2] = {type: 'bishop', color: 'white'}; boardState[10][5] = {type: 'bishop', color: 'white'};
         boardState[10][3] = {type: 'queen', color: 'white'};  boardState[10][4] = {type: 'king', color: 'white'};
+        
         isGameOver = false; selectedSquare = null; legalMoves = [];
+        gameHistory = [];
+        currentTimelineIndex = -1;
+        saveTimelineRecord(); 
     }
 
     function findKing(color) {
@@ -166,6 +428,37 @@
         else { statusEl.innerHTML = chk ? `⚠️ CHECK! - ${currentTurn==='white'?'White':'Black'}'s Turn` : `${currentTurn==='white'?'White':'Black'}'s Turn`; }
     }
 
+    function buildVisualPieceElement(p) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `piece ${p.color === 'white' ? 'p-white' : 'p-black'}`;
+        
+        // Amazon custom crown layout rendering logic
+        if (p.type === 'amazon' || p.type === 'bAmazon') {
+            const container = document.createElement('div');
+            container.className = 'amazon-container';
+            const crown = document.createElement('span');
+            crown.className = 'amazon-crown'; crown.textContent = '👑';
+            const baseHorse = document.createElement('span');
+            baseHorse.textContent = p.color === 'white' ? '♘' : '♞';
+            
+            container.appendChild(crown); container.appendChild(baseHorse);
+            if(p.type === 'bAmazon') container.classList.add('special-badge-star');
+            wrapper.appendChild(container);
+            return wrapper;
+        }
+
+        wrapper.textContent = baseSymbols[p.color][p.type];
+        
+        // Inject clean unique distinction stars
+        if (p.type === 'bBishop' || p.type === 'gKnight') {
+            wrapper.classList.add('special-badge-star');
+        }
+        if (p.type === 'sword') {
+            wrapper.classList.add(p.color === 'white' ? 'w-sword' : 'b-sword');
+        }
+        return wrapper;
+    }
+
     function renderBoard() {
         const bEl = document.getElementById('board'); bEl.innerHTML = '';
         const fBtn = document.getElementById('flipSwordBtn');
@@ -182,15 +475,7 @@
             const p = boardState[r][c];
             
             if (p) {
-                const pEl = document.createElement('div');
-                pEl.classList.add('piece', p.color === 'white' ? 'p-white' : 'p-black');
-                pEl.textContent = symbols[p.color][p.type];
-                
-                if(p.type === 'bBishop') pEl.classList.add('special-bBish');
-                if(p.type === 'gKnight') pEl.classList.add('special-gKni');
-                if(p.type === 'amazon')  pEl.classList.add('special-amaz');
-                if(p.type === 'bAmazon') pEl.classList.add('special-bAmaz');
-                if(p.type === 'sword')   pEl.classList.add(p.color === 'white' ? 'w-sword' : 'b-sword');
+                const pEl = buildVisualPieceElement(p);
                 
                 if (!isGameOver && p.color === currentTurn) {
                     pEl.setAttribute('draggable', 'true');
@@ -216,22 +501,12 @@
             }
 
             if (selectedSquare?.row === r && selectedSquare?.col === c) sEl.classList.add('selected');
-            
-            if (legalMoves.some(m => m.row === r && m.col === c)) {
-                sEl.classList.add(p ? 'legal-capture' : 'legal-move');
-            }
+            if (legalMoves.some(m => m.row === r && m.col === c)) sEl.classList.add(p ? 'legal-capture' : 'legal-move');
 
             sEl.addEventListener('dragover', (e) => { e.preventDefault(); sEl.classList.add('drag-hover'); });
             sEl.addEventListener('dragleave', () => { sEl.classList.remove('drag-hover'); });
-            sEl.addEventListener('drop', (e) => {
-                e.preventDefault();
-                sEl.classList.remove('drag-hover');
-                handleMoveExecution(parseInt(sEl.dataset.row), parseInt(sEl.dataset.col));
-            });
-            
-            sEl.addEventListener('click', () => {
-                if(selectedSquare) handleMoveExecution(r, c);
-            });
+            sEl.addEventListener('drop', (e) => { e.preventDefault(); sEl.classList.remove('drag-hover'); handleMoveExecution(parseInt(sEl.dataset.row), parseInt(sEl.dataset.col)); });
+            sEl.addEventListener('click', () => { if(selectedSquare) handleMoveExecution(r, c); });
 
             bEl.appendChild(sEl);
         }
@@ -252,7 +527,10 @@
             }
             boardState[toR][toC] = p; boardState[selectedSquare.row][selectedSquare.col] = null;
             selectedSquare = null; legalMoves = []; currentTurn = currentTurn === 'white' ? 'black' : 'white';
+            
+            triggerAudioFeedback();
             checkGameStatus();
+            saveTimelineRecord();
         } else {
             selectedSquare = null; legalMoves = [];
         }
@@ -265,7 +543,10 @@
         if (currentSword && currentSword.type === 'sword') {
             currentSword.isReversed = !currentSword.isReversed;
             selectedSquare = null; legalMoves = []; currentTurn = currentTurn === 'white' ? 'black' : 'white';
-            checkGameStatus(); renderBoard();
+            triggerAudioFeedback();
+            checkGameStatus(); 
+            saveTimelineRecord();
+            renderBoard();
         }
     }
 
