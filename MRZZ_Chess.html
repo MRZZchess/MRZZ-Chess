@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="copyright" content="Copyright © 2026 Zyad Al-Mowafy (MRZZ)">
+    <meta name="author" content="Zyad Al-Mowafy (MRZZ)">
+    <meta name="creator" content="Zyad Al-Mowafy (MRZZ)">
+    <title>MRZZ Chess</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
+        
+        /* Welcome & Instructions Screen */
+        .welcome-screen { max-width: 600px; width: 100%; background: #262626; border: 3px solid #b58863; border-radius: 10px; padding: 25px; text-align: left; box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
+        .welcome-screen h1 { color: #f0d9b5; font-size: 32px; margin-top: 0; text-align: center; }
+        .instructions { margin: 20px 0; line-height: 1.6; color: #ddd; }
+        .instructions h3 { color: #f0d9b5; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .instructions ul { padding-left: 20px; margin: 5px 0; }
+        .instructions li { margin-bottom: 8px; }
+        .play-btn { background: #b58863; color: #fff; border: none; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: background 0.2s, transform 0.1s; width: 100%; margin-top: 10px; }
+        .play-btn:hover { background: #8c6239; }
+        .play-btn:active { transform: scale(0.98); }
+
+        /* Main Game Container (Hidden initially) */
+        .game-container { display: none; flex-direction: column; align-items: center; justify-content: center; }
+
+        /* Game Board Styles */
+        h1 { color: #f0d9b5; margin: 5px; font-size: 28px; }
+        .controls { margin-bottom: 10px; display: flex; gap: 15px; }
+        button.game-btn { padding: 10px 20px; font-weight: bold; background: #b58863; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        #flipSwordBtn { background: #b83b3b; display: none; }
+        .board { display: grid; grid-template-columns: repeat(8, 55px); grid-template-rows: repeat(12, 55px); border: 4px solid #333; background: #b58863; }
+        .square { width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; user-select: none; }
+        .light { background: #f0d9b5; } .dark { background: #b58863; }
+        .piece { cursor: grab; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; z-index: 2; }
+        .piece:active { cursor: grabbing; }
+        .p-white { color: #fff !important; filter: drop-shadow(0 0 2px #000) drop-shadow(0 2px 3px rgba(0,0,0,0.8)); }
+        .p-black { color: #111 !important; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 1px 1px #fff); }
+        .special-bBish { color: #00ffff !important; }
+        .special-gKni  { color: #ffd700 !important; }
+        .special-amaz  { color: #ff00ff !important; }
+        .special-bAmaz { color: #ffaa00 !important; }
+        .w-sword { color: #ff3333 !important; filter: drop-shadow(0 0 5px #ff3333); }
+        .b-sword { color: #3388ff !important; filter: drop-shadow(0 0 5px #3388ff); }
+        .selected { background: #7b9c60 !important; }
+        .drag-hover { background: #9cb885 !important; }
+        
+        .legal-move::after { content: ''; width: 14px; height: 14px; background: rgba(0, 0, 0, 0.25); border-radius: 50%; position: absolute; z-index: 1; }
+        .legal-capture { background: #cc5a5a !important; border: 2px dashed #fff; }
+        
+        .status { margin: 10px 0; font-size: 18px; font-weight: bold; color: #f0d9b5; }
+        .ad-container { margin-top: 15px; width: 320px; height: 50px; background: #333; border: 2px dashed #666; display: flex; align-items: center; justify-content: center; color: #888; font-size: 12px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="welcome-screen" id="welcomeScreen">
+        <h1>MRZZ Chess</h1>
+        <div class="instructions">
+            <h3>📜 Game Manual & Special Rules:</h3>
+            <p>Welcome to <strong>MRZZ Chess</strong>, a battlefield expanded to a massive <strong>12×8 grid</strong>. Master the classic pieces along with your newly engineered mythical arsenal:</p>
+            <ul>
+                <li><strong>The Sword (⚔️/🗡️):</strong> A deadly direction-locked projectile unit. It attacks continuously along its designated angles. You can alternate its attacking orientation at the cost of your turn using the <strong>"Flip Sword 🔄"</strong> button.</li>
+                <li><strong>Bounced Bishop (🎔/🪖 Special):</strong> An advanced tactical unit that moves diagonally but holds the unique ability to **bounce off the left and right walls** of the battlefield to surprise enemies.</li>
+                <li><strong>Golden Knight (♘/♞ Special):</strong> A massive cavalry piece that combines the standard L-shaped leap of a Knight with the 1-step multi-directional movement of a King.</li>
+                <li><strong>Amazon & Bounced Amazon (♕/♛ Special):</strong> Ultimate powerhouse units. The regular Amazon combines Queen and Knight movements. The Bounced Amazon combines Knight leaps with the wall-bouncing diagonal physics of the Bounced Bishop.</li>
+                <li><strong>Pawn & Board Zones:</strong> Pawns have unique dynamic mechanics depending on their row height. Reaching the farthest rows (Row 12 for White, Row 1 for Black) triggers the <strong>Ultimate Promotion</strong> prompt.</li>
+                <li><strong>How to Move:</strong> Simply <strong>Drag & Drop</strong> any piece, or click the piece first to highlight all legal/capture moves, then click the destination square.</li>
+            </ul>
+        </div>
+        <button class="play-btn" onclick="startGame()">Play Game ⚔️</button>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+        <h1>MRZZ Chess</h1>
+        <div class="controls">
+            <button class="game-btn" onclick="resetGame()">Reset Board</button>
+            <button id="flipSwordBtn" onclick="executeSwordFlip()">Flip Sword 🔄</button>
+        </div>
+        <div class="board" id="board"></div>
+        <div class="status" id="status">White's turn ⚪</div>
+
+        <div class="ad-container" id="adSpace" style="padding: 0; overflow: hidden; border: 1px solid #444;">
+            <a href="https://www.google.com" target="_blank" style="display: block; width: 100%; height: 100%;">
+                <img src="https://picsum.photos/320/50?blur=1" alt="Advertisement" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            </a>
+        </div>
+    </div>
+
+    <footer style="margin-top:20px;color:#999;font-size:12px;text-align:center;">
+        © 2026 MRZZ Chess Pro<br>
+        Created by Zyad Al-Mowafy (MRZZ)<br>
+        All Rights Reserved
+    </footer>
+
+<script>
+    function startGame() {
+        document.getElementById('welcomeScreen').style.display = 'none';
+        document.getElementById('gameContainer').style.display = 'flex';
+        resetGame();
+    }
+
+    const BOARD_ROWS = 12, BOARD_COLS = 8;
+    let boardState = [], selectedSquare = null, legalMoves = [], currentTurn = 'white', isGameOver = false;
+    
+    const symbols = {
+        white: { pawn: '♙', rook: '♖', knight: '♘', bishop: '♗', bBishop: '♗', queen: '♕', king: '♔', sword: '⚔️', gKnight: '♘', amazon: '♕', bAmazon: '♕' },
+        black: { pawn: '♟', rook: '♜', knight: '♞', bishop: '♝', bBishop: '♝', queen: '♛', king: '♚', sword: '🗡️', gKnight: '♞', amazon: '♛', bAmazon: '♛' }
+    };
+
+    function initBoardData() {
+        boardState = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
+        for(let c=0; c<BOARD_COLS; c++) {
+            boardState[2][c] = { type: 'pawn', color: 'black' };
+            boardState[9][c] = { type: 'pawn', color: 'white' };
+        }
+        const backLayout = ['sword', 'gKnight', 'bBishop', 'amazon', 'bAmazon', 'bBishop', 'gKnight', 'sword'];
+        for(let c=0; c<BOARD_COLS; c++) {
+            boardState[0][c] = { type: backLayout[c], color: 'black', isReversed: true };
+            boardState[1][c] = { type: 'rook', color: 'black' }; 
+            boardState[10][c] = { type: 'rook', color: 'white' }; 
+            boardState[11][c] = { type: backLayout[c], color: 'white', isReversed: false };
+        }
+        boardState[1][1] = {type: 'knight', color: 'black'}; boardState[1][6] = {type: 'knight', color: 'black'};
+        boardState[1][2] = {type: 'bishop', color: 'black'}; boardState[1][5] = {type: 'bishop', color: 'black'};
+        boardState[1][3] = {type: 'queen', color: 'black'};  boardState[1][4] = {type: 'king', color: 'black'};
+        boardState[10][1] = {type: 'knight', color: 'white'}; boardState[10][6] = {type: 'knight', color: 'white'};
+        boardState[10][2] = {type: 'bishop', color: 'white'}; boardState[10][5] = {type: 'bishop', color: 'white'};
+        boardState[10][3] = {type: 'queen', color: 'white'};  boardState[10][4] = {type: 'king', color: 'white'};
+        isGameOver = false; selectedSquare = null; legalMoves = [];
+    }
+
+    function findKing(color) {
+        for (let r=0; r<BOARD_ROWS; r++) for (let c=0; c<BOARD_COLS; c++)
+            if (boardState[r][c]?.type === 'king' && boardState[r][c]?.color === color) return { row: r, col: c };
+        return null;
+    }
+
+    function isSquareAttacked(tRow, tCol, atkColor) {
+        for (let r=0; r<BOARD_ROWS; r++) for (let c=0; c<BOARD_COLS; c++)
+            if (boardState[r][c]?.color === atkColor && calculateRawMoves(r, c, boardState[r][c]).some(m => m.row === tRow && m.col === tCol)) return true;
+        return false;
+    }
+
+    function isInCheck(color) {
+        const k = findKing(color); return k ? isSquareAttacked(k.row, k.col, color === 'white' ? 'black' : 'white') : false;
+    }
+
+    function filterSafeMoves(r, c, raws, piece) {
+        return raws.filter(m => {
+            const old = boardState[m.row][m.col]; boardState[m.row][m.col] = piece; boardState[r][c] = null;
+            const chk = isInCheck(piece.color); boardState[r][c] = piece; boardState[m.row][m.col] = old;
+            return !chk;
+        });
+    }
+
+    function hasAnyLegalMoves(color) {
+        for (let r=0; r<BOARD_ROWS; r++) for (let c=0; c<BOARD_COLS; c++)
+            if (boardState[r][c]?.color === color && filterSafeMoves(r, c, calculateRawMoves(r, c, boardState[r][c]), boardState[r][c]).length > 0) return true;
+        return false;
+    }
+
+    function checkGameStatus() {
+        const chk = isInCheck(currentTurn), hasM = hasAnyLegalMoves(currentTurn), statusEl = document.getElementById('status');
+        if (!hasM) { isGameOver = true; statusEl.innerHTML = chk ? `🚨 CHECKMATE! ${currentTurn==='white'?'Black':'White'} Wins! 🏆` : "🤝 DRAW! (Stalemate)"; }
+        else { statusEl.innerHTML = chk ? `⚠️ CHECK! - ${currentTurn==='white'?'White':'Black'}'s Turn` : `${currentTurn==='white'?'White':'Black'}'s Turn`; }
+    }
+
+    function renderBoard() {
+        const bEl = document.getElementById('board'); bEl.innerHTML = '';
+        const fBtn = document.getElementById('flipSwordBtn');
+        
+        if (!isGameOver && selectedSquare && boardState[selectedSquare.row][selectedSquare.col]?.type === 'sword') {
+            const currentSword = boardState[selectedSquare.row][selectedSquare.col];
+            let isFacingForward = (currentSword.color === 'white' && !currentSword.isReversed) || (currentSword.color === 'black' && currentSword.isReversed);
+            fBtn.style.display = 'block'; fBtn.textContent = "Flip Sword" + (isFacingForward ? " 🔼" : " 🔽");
+        } else fBtn.style.display = 'none';
+        
+        for (let r=0; r<BOARD_ROWS; r++) for (let c=0; c<BOARD_COLS; c++) {
+            const sEl = document.createElement('div'); sEl.classList.add('square', (r+c)%2===0 ? 'light' : 'dark');
+            sEl.dataset.row = r; sEl.dataset.col = c;
+            const p = boardState[r][c];
+            
+            if (p) {
+                const pEl = document.createElement('div');
+                pEl.classList.add('piece', p.color === 'white' ? 'p-white' : 'p-black');
+                pEl.textContent = symbols[p.color][p.type];
+                
+                if(p.type === 'bBishop') pEl.classList.add('special-bBish');
+                if(p.type === 'gKnight') pEl.classList.add('special-gKni');
+                if(p.type === 'amazon')  pEl.classList.add('special-amaz');
+                if(p.type === 'bAmazon') pEl.classList.add('special-bAmaz');
+                if(p.type === 'sword')   pEl.classList.add(p.color === 'white' ? 'w-sword' : 'b-sword');
+                
+                if (!isGameOver && p.color === currentTurn) {
+                    pEl.setAttribute('draggable', 'true');
+                    pEl.addEventListener('dragstart', (e) => {
+                        selectedSquare = { row: r, col: c };
+                        legalMoves = filterSafeMoves(r, c, calculateRawMoves(r, c, p), p);
+                        setTimeout(() => renderBoard(), 10);
+                    });
+                }
+                
+                pEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if(p.color === currentTurn) { 
+                        selectedSquare = { row: r, col: c }; 
+                        legalMoves = filterSafeMoves(r, c, calculateRawMoves(r, c, p), p);
+                    } else {
+                        selectedSquare = null; legalMoves = [];
+                    }
+                    renderBoard();
+                });
+
+                sEl.appendChild(pEl);
+            }
+
+            if (selectedSquare?.row === r && selectedSquare?.col === c) sEl.classList.add('selected');
+            
+            if (legalMoves.some(m => m.row === r && m.col === c)) {
+                sEl.classList.add(p ? 'legal-capture' : 'legal-move');
+            }
+
+            sEl.addEventListener('dragover', (e) => { e.preventDefault(); sEl.classList.add('drag-hover'); });
+            sEl.addEventListener('dragleave', () => { sEl.classList.remove('drag-hover'); });
+            sEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                sEl.classList.remove('drag-hover');
+                handleMoveExecution(parseInt(sEl.dataset.row), parseInt(sEl.dataset.col));
+            });
+            
+            sEl.addEventListener('click', () => {
+                if(selectedSquare) handleMoveExecution(r, c);
+            });
+
+            bEl.appendChild(sEl);
+        }
+    }
+
+    function handleMoveExecution(toR, toC) {
+        if (!selectedSquare) return;
+        const p = boardState[selectedSquare.row][selectedSquare.col];
+        const isLegal = legalMoves.some(m => m.row === toR && m.col === toC);
+        
+        if (isLegal) {
+            if (p.type === 'pawn') {
+                let vr = 12 - toR;
+                if ((p.color === 'white' && vr === 12) || (p.color === 'black' && vr === 1)) {
+                    let choice = prompt("Choose Ultimate Promotion: (queen, rook, bishop, knight)").toLowerCase().trim();
+                    p.type = ['queen', 'rook', 'bishop', 'knight'].includes(choice) ? choice : 'queen';
+                }
+            }
+            boardState[toR][toC] = p; boardState[selectedSquare.row][selectedSquare.col] = null;
+            selectedSquare = null; legalMoves = []; currentTurn = currentTurn === 'white' ? 'black' : 'white';
+            checkGameStatus();
+        } else {
+            selectedSquare = null; legalMoves = [];
+        }
+        renderBoard();
+    }
+
+    function executeSwordFlip() {
+        if (isGameOver || !selectedSquare) return;
+        const currentSword = boardState[selectedSquare.row][selectedSquare.col];
+        if (currentSword && currentSword.type === 'sword') {
+            currentSword.isReversed = !currentSword.isReversed;
+            selectedSquare = null; legalMoves = []; currentTurn = currentTurn === 'white' ? 'black' : 'white';
+            checkGameStatus(); renderBoard();
+        }
+    }
+
+    function calculateRawMoves(r, c, p) {
+        let moves = []; const enemy = p.color === 'white' ? 'black' : 'white';
+        const addM = (nr, nc) => {
+            if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS) {
+                if (!boardState[nr][nc] || boardState[nr][nc].color === enemy) { moves.push({ row: nr, col: nc }); return !boardState[nr][nc]; }
+            } return false;
+        };
+        const addP = (nr, nc, capOnly = false) => {
+            if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS) {
+                let t = boardState[nr][nc];
+                if (!t && !capOnly) moves.push({ row: nr, col: nc });
+                else if (t && t.color === enemy) moves.push({ row: nr, col: nc });
+            }
+        };
+
+        if (p.type === 'pawn') {
+            let vr = 12 - r, dir = p.color === 'white' ? -1 : 1;
+            if ((p.color === 'white' && vr >= 10) || (p.color === 'black' && vr <= 3)) {
+                for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) if(dr!==0 || dc!==0) addP(r+dr, c+dc, false);
+            } else if ((p.color === 'white' && vr >= 8) || (p.color === 'black' && vr <= 5)) {
+                addP(r+dir, c, false); addP(r+dir, c-1, true); addP(r+dir, c+1, true);
+                if (c-1>=0 && !boardState[r+dir][c-1]) addP(r+dir, c-1, false);
+                if (c+1<BOARD_COLS && !boardState[r+dir][c+1]) addP(r+dir, c+1, false);
+            } else {
+                if (r+dir >= 0 && r+dir < BOARD_ROWS && !boardState[r+dir][c]) moves.push({ row: r+dir, col: c });
+                [-1, 1].forEach(dc => { let nr=r+dir, nc=c+dc; if (nr>=0 && nr<BOARD_ROWS && nc>=0 && nc<BOARD_COLS && boardState[nr][nc]?.color === enemy) moves.push({ row: nr, col: nc }); });
+            }
+        }
+        if (['gKnight', 'king', 'amazon', 'bAmazon'].includes(p.type)) { for(let dr=-1; dr<=1; dr++) for(let dc=-1; dc<=1; dc++) if(dr!==0 || dc!==0) addM(r+dr, c+dc); }
+        if (['gKnight', 'knight', 'amazon', 'bAmazon'].includes(p.type)) { [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(([dr, dc]) => addM(r+dr, c+dc)); }
+        if (['bishop', 'queen', 'amazon'].includes(p.type)) { [[-1,-1], [-1,1], [1,-1], [1,1]].forEach(([dr, dc]) => { let s=1; while(addM(r+dr*s, c+dc*s)) s++; }); }
+        if (['rook', 'queen'].includes(p.type)) { [[-1,0], [1,0], [0,-1], [0,1]].forEach(([dr, dc]) => { let s=1; while(addM(r+dr*s, c+dc*s)) s++; }); }
+        if (['bBishop', 'bAmazon'].includes(p.type)) {
+            [[-1,-1], [-1,1], [1,-1], [1,1]].forEach(([dr, dc]) => {
+                let cr=r, cc=c, cdr=dr, cdc=dc;
+                for(let s=1; s<15; s++) {
+                    cr+=cdr; cc+=cdc; if (cc<0) { cc=1; cdc=-cdc; } if (cc>=BOARD_COLS) { cc=BOARD_COLS-2; cdc=-cdc; }
+                    if (cr >= 0 && cr < BOARD_ROWS) { if (!boardState[cr][cc]) moves.push({ row: cr, col: cc }); else { if (boardState[cr][cc].color === enemy) moves.push({ row: cr, col: cc }); break; } } else break;
+                }
+            });
+        }
+        if (p.type === 'sword') {
+            let sDirs = !p.isReversed ? [[-1, 0], [1, -1], [1, 1]] : [[1, 0], [-1, -1], [-1, 1]];
+            sDirs.forEach(([dr, dc]) => {
+                let s=1; while (true) {
+                    let nr=r+dr*s, nc=c+dc*s;
+                    if (nr>=0 && nr<BOARD_ROWS && nc>=0 && nc<BOARD_COLS) {
+                        let t=boardState[nr][nc]; if (!t) moves.push({ row: nr, col: nc }); else { if (t.color === enemy) moves.push({ row: nr, col: nc }); break; } s++;
+                    } else break;
+                }
+            });
+        }
+        return moves;
+    }
+
+    function resetGame() { initBoardData(); selectedSquare = null; legalMoves = []; currentTurn = 'white'; renderBoard(); checkGameStatus(); }
+</script>
+</body>
+</html>
